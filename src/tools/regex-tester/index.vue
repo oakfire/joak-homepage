@@ -35,7 +35,7 @@ const highlightedText = computed(() => {
   if (!pattern.value || !testText.value || error.value) return ''
   try {
     const regex = new RegExp(pattern.value, flags.value.includes('g') ? flags.value : flags.value + 'g')
-    return testText.value.replace(regex, '<mark class="bg-secondary/60 rounded px-0.5">$&</mark>')
+    return testText.value.replace(regex, '<mark style="background:color-mix(in srgb, var(--color-secondary) 60%, transparent)" class="rounded px-0.5">$&</mark>')
   } catch {
     return ''
   }

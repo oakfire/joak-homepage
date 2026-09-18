@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { theme } from '../../composables/useTheme'
 
-const hex = ref('#E07A5F')
+const hex = ref(theme.primary)
 const r = ref(224)
 const g = ref(122)
 const b = ref(95)

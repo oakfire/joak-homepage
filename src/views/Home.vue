@@ -2,6 +2,7 @@
 import Header from '../components/Header.vue'
 import LinkBar from '../components/LinkBar.vue'
 import ToolGrid from '../components/ToolGrid.vue'
+import ThemePanel from '../components/ThemePanel.vue'
 </script>
 
 <template>
@@ -11,5 +12,6 @@ import ToolGrid from '../components/ToolGrid.vue'
       <LinkBar />
       <ToolGrid />
     </div>
+    <ThemePanel />
   </div>
 </template>
