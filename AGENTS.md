@@ -29,7 +29,8 @@ src/
   App.vue
   router/index.ts          # 路由配置，工具路由从 registry 动态生成
   views/Home.vue            # 主页：链接 + 工具卡片网格
-  components/               # Header, LinkBar, ToolGrid
+  components/               # Header, LinkBar, ToolGrid, ThemePanel
+  composables/useTheme.ts   # 主题状态管理，CSS 变量驱动
   tools/
     registry.ts             # 工具注册表（添加工具的唯一入口）
     json-formatter/
@@ -37,6 +38,7 @@ src/
     color-picker/
     regex-tester/
     timestamp/
+    h264-sps-parser/        # parser.ts (核心逻辑) + index.vue
   data/links.ts             # 链接配置
 ```
 
@@ -45,6 +47,10 @@ src/
 - 添加新工具：① 新建 `tools/<id>/index.vue` ② 在 `tools/registry.ts` 加一行
 - 添加新链接：编辑 `data/links.ts`
 - 无 UI 库 — 所有表单、按钮、布局均为手写 + UnoCSS
-- 暖色调：主色 `#E07A5F`、辅色 `#F2CC8F`、背景 `#FFF8F0`、文字 `#3D405B`
+- 颜色通过 CSS 变量动态切换，UnoCSS 主题引用 `var(--color-xxx)`；默认值见 `uno.config.ts`
 - 工具路由路径：`/tool/<tool-id>`
 - 工具组件使用 `<script setup lang="ts">`
+
+## Important
+
+- 当用户说"参考标准""对照标准""按标准审视"等，必须从标准文档原文重新推导实现逻辑，而不是在已有代码上做局部修补。已有代码可能遗漏了标准中的字段或条件分支，只有回到源头才能发现偏差。

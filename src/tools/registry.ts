@@ -44,4 +44,11 @@ export const tools: Tool[] = [
     description: 'Unix 时间戳与日期互转',
     component: () => import('./timestamp/index.vue'),
   },
+  {
+    id: 'h264-sps-parser',
+    name: 'H264 SPS 解析',
+    icon: '📹',
+    description: '解析 H.264 SPS NALU 参数',
+    component: () => import('./h264-sps-parser/index.vue'),
+  },
 ]
