@@ -5,7 +5,7 @@ export interface Link {
 }
 
 export const links: Link[] = [
-  { name: 'GitHub', url: 'https://github.com', icon: 'GH' },
-  { name: 'Blog', url: 'https://blog.example.com', icon: '📝' },
-  { name: 'Email', url: 'mailto:hello@example.com', icon: '✉' },
+  { name: 'GitHub', url: 'https://github.com', icon: 'i-lucide-github' },
+  { name: 'Blog', url: 'https://blog.example.com', icon: 'i-lucide-book-open' },
+  { name: 'Email', url: 'mailto:hello@example.com', icon: 'i-lucide-mail' },
 ]

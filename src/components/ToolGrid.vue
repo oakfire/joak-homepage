@@ -19,7 +19,10 @@ function openTool(id: string) {
         class="bg-bg-card border border-border rounded-xl p-5 text-left cursor-pointer hover:border-primary hover:shadow-md transition-all duration-200 group"
         @click="openTool(tool.id)"
       >
-        <div class="text-2xl mb-2 group-hover:text-primary transition-colors duration-200">{{ tool.icon }}</div>
+        <div class="text-2xl mb-2 group-hover:text-primary transition-colors duration-200">
+          <span v-if="tool.icon.startsWith('i-')" :class="tool.icon"></span>
+          <span v-else>{{ tool.icon }}</span>
+        </div>
         <div class="font-semibold text-text mb-1">{{ tool.name }}</div>
         <div class="text-sm text-text-light">{{ tool.description }}</div>
       </button>
