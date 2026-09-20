@@ -51,4 +51,11 @@ export const tools: Tool[] = [
     description: '解析 H.264 SPS NALU 参数',
     component: () => import('./h264-sps-parser/index.vue'),
   },
+  {
+    id: 'ascii-table',
+    name: 'ASCII 码表',
+    icon: 'i-lucide-table-2',
+    description: '查看 ASCII 字符编码表',
+    component: () => import('./ascii-table/index.vue'),
+  },
 ]
