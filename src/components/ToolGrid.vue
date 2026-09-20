@@ -16,7 +16,7 @@ function openTool(id: string) {
       <button
         v-for="tool in tools"
         :key="tool.id"
-        class="bg-bg-card border border-border rounded-xl p-5 text-left cursor-pointer hover:border-primary hover:shadow-md transition-all duration-200 group"
+        class="bg-bg-card border-none rounded-xl p-5 text-left cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-200 group"
         @click="openTool(tool.id)"
       >
         <div class="text-2xl mb-2 group-hover:text-primary transition-colors duration-200">
