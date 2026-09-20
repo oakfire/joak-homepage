@@ -11,7 +11,7 @@ function openTool(id: string) {
 
 <template>
   <section>
-    <h2 class="text-lg font-semibold text-text mb-4 text-center">工具</h2>
+    <h2 class="text-lg font-semibold text-text mb-4 text-center">我的工具</h2>
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-3xl mx-auto">
       <button
         v-for="tool in tools"
@@ -19,7 +19,7 @@ function openTool(id: string) {
         class="bg-bg-card border-none rounded-xl p-5 text-left cursor-pointer shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-200 group"
         @click="openTool(tool.id)"
       >
-        <div class="text-2xl mb-2 group-hover:text-primary transition-colors duration-200">
+        <div class="text-2xl mb-2 text-primary">
           <span v-if="tool.icon.startsWith('i-')" :class="tool.icon"></span>
           <span v-else>{{ tool.icon }}</span>
         </div>
