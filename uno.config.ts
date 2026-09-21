@@ -24,6 +24,10 @@ export default defineConfig({
   ],
   safelist: iconSafelist,
   theme: {
+    fontFamily: {
+      sans: ['Roboto Mono', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+      mono: ['Roboto Mono', 'monospace'],
+    },
     colors: {
       primary: 'var(--color-primary, #69DBF2)',
       'primary-light': 'var(--color-primary-light, #A0E8F8)',

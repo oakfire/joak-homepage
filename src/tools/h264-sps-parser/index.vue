@@ -102,11 +102,11 @@ function getFields(r: SPSResult): Field[][] {
 
     <div class="mb-4">
       <label class="block text-sm text-text-light mb-2">SPS NALU 十六进制数据（可含起始码）</label>
-      <textarea
-        v-model="hexInput"
-        class="w-full h-32 p-4 rounded-lg border border-border bg-bg-card text-text text-sm font-mono resize-y focus:outline-none focus:border-primary transition-colors"
-        placeholder="67 64 00 1E AC D9 40 78 02 27 E5 C0 44 00 00 03 00 04 00 00 03 00 C8 3C 48 96 58"
-      />
+        <textarea
+          v-model="hexInput"
+          class="w-full h-32 p-4 rounded-lg border border-border bg-bg-card text-text text-sm font-mono resize-y focus:outline-none focus:border-primary transition-colors"
+          placeholder="67 64 00 1E AC D9 40 78 02 27 E5 C0 44 00 00 03 00 04 00 00 03 00 C8 3C 48 96 58"
+        />
     </div>
 
     <div v-if="error" class="mb-4 px-4 py-3 rounded-lg bg-red-50 text-red-600 text-sm border border-red-200">

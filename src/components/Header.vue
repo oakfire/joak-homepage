@@ -7,6 +7,6 @@
       <img src="/avatar.jpg" alt="Joak" class="w-full h-full object-cover" />
     </div>
     <h1 class="text-3xl font-bold text-text mb-2">oakfire</h1>
-    <p class="text-text-light">Let life be beautiful like summer flowers and death like autumn leaves.</p>
+    <p class="text-text-light text-lg tracking-wide">The birth and death of the leaves are the rapid whirls of the eddy whose wider circles move slowly among stars.</p>
   </header>
 </template>

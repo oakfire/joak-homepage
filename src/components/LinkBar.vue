@@ -4,7 +4,7 @@ import { links } from '../data/links'
 
 <template>
   <section class="mb-12">
-    <h2 class="text-lg font-semibold text-text mb-4 text-center">我的世界</h2>
+    <h2 class="text-lg font-semibold text-text mb-4 text-center">My World</h2>
     <div class="flex flex-wrap justify-center gap-3">
       <a
         v-for="link in links"
