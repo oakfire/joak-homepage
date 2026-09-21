@@ -58,4 +58,11 @@ export const tools: Tool[] = [
     description: '查看 ASCII 字符编码表',
     component: () => import('./ascii-table/index.vue'),
   },
+  {
+    id: 'file-hash',
+    name: '文件哈希',
+    icon: 'i-lucide-hash',
+    description: '计算文件的 MD5/SHA 哈希值',
+    component: () => import('./file-hash/index.vue'),
+  },
 ]
