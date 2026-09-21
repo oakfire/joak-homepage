@@ -65,4 +65,11 @@ export const tools: Tool[] = [
     description: '计算文件的 MD5/SHA 哈希值',
     component: () => import('./file-hash/index.vue'),
   },
+  {
+    id: 'base-converter',
+    name: '进制转换',
+    icon: 'i-lucide-calculator',
+    description: '数字进制转换（2/8/10/16）',
+    component: () => import('./base-converter/index.vue'),
+  },
 ]
