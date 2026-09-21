@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import CopyButton from '../../components/CopyButton.vue'
 
 const search = ref('')
-const copiedIndex = ref<number | null>(null)
 
 const asciiData = computed(() => {
   const data = []
@@ -83,17 +83,7 @@ function getControlCharSymbol(code: number): string {
   return ''
 }
 
-async function copyToClipboard(text: string, index: number) {
-  try {
-    await navigator.clipboard.writeText(text)
-    copiedIndex.value = index
-    setTimeout(() => {
-      copiedIndex.value = null
-    }, 1500)
-  } catch (err) {
-    console.error('Failed to copy:', err)
-  }
-}
+
 </script>
 
 <template>
@@ -142,13 +132,7 @@ async function copyToClipboard(text: string, index: number) {
                 <span v-else class="text-text-light text-base">{{ item.displayChar }}</span>
               </td>
               <td class="px-2 py-0.5 text-xs border border-border">
-                <button
-                  class="p-1 rounded bg-bg-card text-text border border-border hover:border-primary transition-colors"
-                  :class="copiedIndex === item.dec ? 'bg-primary text-white' : ''"
-                  @click="copyToClipboard(item.isPrintable ? item.displayChar : item.char, item.dec)"
-                >
-                  <span :class="copiedIndex === item.dec ? 'i-lucide-check' : 'i-lucide-copy'" class="w-3 h-3"></span>
-                </button>
+                <CopyButton :text="item.isPrintable ? item.displayChar : item.char" />
               </td>
             </tr>
           </tbody>

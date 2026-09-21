@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { theme } from '../../composables/useTheme'
+import CopyButton from '../../components/CopyButton.vue'
 
 const hex = ref(theme.primary)
 const r = ref(224)
@@ -59,9 +60,7 @@ function onColorInput(e: Event) {
   hex.value = (e.target as HTMLInputElement).value
 }
 
-function copyText(text: string) {
-  navigator.clipboard.writeText(text)
-}
+
 </script>
 
 <template>
@@ -82,7 +81,7 @@ function copyText(text: string) {
             v-model="hex"
             class="flex-1 px-3 py-2 rounded-lg border border-border bg-bg-card text-text text-sm focus:outline-none focus:border-primary transition-colors"
           />
-          <button class="text-xs text-primary cursor-pointer bg-transparent border-none" @click="copyText(hex)">复制</button>
+          <CopyButton :text="hex" />
         </div>
         <div class="flex items-center gap-3">
           <label class="text-sm text-text-light w-10">RGB</label>
@@ -91,7 +90,7 @@ function copyText(text: string) {
             readonly
             class="flex-1 px-3 py-2 rounded-lg border border-border bg-bg text-text text-sm"
           />
-          <button class="text-xs text-primary cursor-pointer bg-transparent border-none" @click="copyText(rgbStr)">复制</button>
+          <CopyButton :text="rgbStr" />
         </div>
         <div class="flex items-center gap-3">
           <label class="text-sm text-text-light w-10">HSL</label>
@@ -100,7 +99,7 @@ function copyText(text: string) {
             readonly
             class="flex-1 px-3 py-2 rounded-lg border border-border bg-bg text-text text-sm"
           />
-          <button class="text-xs text-primary cursor-pointer bg-transparent border-none" @click="copyText(hsl)">复制</button>
+          <CopyButton :text="hsl" />
         </div>
       </div>
     </div>

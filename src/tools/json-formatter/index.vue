@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import CopyButton from '../../components/CopyButton.vue'
 
 const input = ref('')
 const output = ref('')
@@ -28,11 +29,6 @@ function compress() {
   }
 }
 
-function copy() {
-  if (output.value) {
-    navigator.clipboard.writeText(output.value)
-  }
-}
 
 function clear() {
   input.value = ''
@@ -46,7 +42,6 @@ function clear() {
     <div class="flex flex-wrap gap-2 mb-4">
       <button class="px-4 py-2 rounded-lg bg-primary text-white text-sm border-none cursor-pointer hover:bg-primary-light transition-colors" @click="format">格式化</button>
       <button class="px-4 py-2 rounded-lg bg-secondary text-text text-sm border-none cursor-pointer hover:bg-secondary-light transition-colors" @click="compress">压缩</button>
-      <button class="px-4 py-2 rounded-lg bg-bg-card text-text text-sm border border-border cursor-pointer hover:border-primary transition-colors" @click="copy">复制结果</button>
       <button class="px-4 py-2 rounded-lg bg-bg-card text-text text-sm border border-border cursor-pointer hover:border-primary transition-colors" @click="clear">清空</button>
       <div class="flex items-center gap-2 ml-auto text-sm text-text-light">
         <label>缩进</label>
@@ -64,7 +59,9 @@ function clear() {
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <div>
-        <label class="block text-sm text-text-light mb-2">输入</label>
+        <div class="flex items-center h-7 mb-2">
+          <label class="text-sm text-text-light">输入</label>
+        </div>
         <textarea
           v-model="input"
           class="w-full h-80 p-4 rounded-lg border border-border bg-bg-card text-text text-sm resize-y focus:outline-none focus:border-primary transition-colors"
@@ -72,7 +69,10 @@ function clear() {
         />
       </div>
       <div>
-        <label class="block text-sm text-text-light mb-2">输出</label>
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-sm text-text-light">输出</label>
+          <CopyButton :text="output" />
+        </div>
         <textarea
           :value="output"
           readonly

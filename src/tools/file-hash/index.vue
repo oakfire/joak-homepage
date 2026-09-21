@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import CopyButton from '../../components/CopyButton.vue'
 
 type Algorithm = 'CRC32' | 'MD5' | 'SHA-1' | 'SHA-256' | 'SHA-384' | 'SHA-512'
 
@@ -17,7 +18,6 @@ const error = ref('')
 const fileSize = ref('')
 const fileName = ref('')
 const elapsedTime = ref(0)
-const copiedAlgo = ref<Algorithm | null>(null)
 const uppercase = ref(false)
 let timer: ReturnType<typeof setInterval> | null = null
 
@@ -378,11 +378,6 @@ class MD5 {
   }
 }
 
-function copyResult(algo: Algorithm, hash: string) {
-  navigator.clipboard.writeText(uppercase.value ? hash.toUpperCase() : hash)
-  copiedAlgo.value = algo
-  setTimeout(() => { copiedAlgo.value = null }, 2000)
-}
 
 const hasResults = computed(() => results.value.size > 0)
 const inputSize = computed(() => {
@@ -509,20 +504,16 @@ const elapsedTimeStr = computed(() => {
           >ABC</button>
         </div>
       </div>
-      <div
-        v-for="[algo, hash] in results"
-        :key="algo"
-        class="rounded-xl bg-bg-card border border-border overflow-hidden"
-      >
-        <div class="flex items-center justify-between px-4 py-2 bg-bg border-b border-border">
-          <span class="text-xs font-semibold text-primary uppercase tracking-wider">{{ algo }}</span>
-          <button
-            class="text-xs cursor-pointer bg-transparent border-none transition-colors"
-            :class="copiedAlgo === algo ? 'text-green-500' : 'text-primary'"
-            @click="copyResult(algo, hash)"
-          >{{ copiedAlgo === algo ? '已复制' : '复制' }}</button>
+      <div class="rounded-xl border border-border overflow-hidden">
+        <div
+          v-for="[algo, hash] in results"
+          :key="algo"
+          class="flex items-center gap-4 px-4 py-3 border-b border-border last:border-b-0"
+        >
+          <span class="text-xs font-semibold text-primary uppercase tracking-wider w-20 shrink-0">{{ algo }}</span>
+          <code class="flex-1 font-mono text-sm text-text break-all select-all">{{ uppercase ? hash.toUpperCase() : hash }}</code>
+          <CopyButton :text="uppercase ? hash.toUpperCase() : hash" />
         </div>
-        <div class="px-4 py-3 font-mono text-sm text-text break-all select-all">{{ uppercase ? hash.toUpperCase() : hash }}</div>
       </div>
     </div>
   </div>

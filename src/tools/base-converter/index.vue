@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import CopyButton from '../../components/CopyButton.vue'
 
 const input = ref('')
 const fromBase = ref(10)
 const error = ref('')
-const copied = ref('')
 
 const bases = [2, 8, 10, 16]
 
@@ -92,13 +92,6 @@ function getBaseLabel(base: number): string {
   return labels[base] || `${base} 进制`
 }
 
-async function copyValue(value: string) {
-  try {
-    await navigator.clipboard.writeText(value)
-    copied.value = value
-    setTimeout(() => { copied.value = '' }, 1500)
-  } catch {}
-}
 
 function clear() {
   input.value = ''
@@ -143,11 +136,7 @@ function clear() {
       >
         <span class="text-sm text-text-light w-32 shrink-0">{{ r.label }}</span>
         <code class="flex-1 text-sm font-mono text-text break-all">{{ r.value }}</code>
-        <button
-          class="px-3 py-1 rounded text-xs border-none cursor-pointer transition-colors shrink-0"
-          :class="copied === r.value ? 'bg-green-500 text-white' : 'bg-bg text-text-light border border-border hover:border-primary'"
-          @click="copyValue(r.value)"
-        >{{ copied === r.value ? '已复制' : '复制' }}</button>
+        <CopyButton :text="r.value" />
       </div>
     </div>
   </div>

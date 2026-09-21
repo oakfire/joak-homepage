@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import CopyButton from '../../components/CopyButton.vue'
 
 const timestamp = ref(Math.floor(Date.now() / 1000).toString())
 const dateStr = ref('')
@@ -41,9 +42,7 @@ function useCurrent() {
   convertToDate()
 }
 
-function copyText(text: string) {
-  navigator.clipboard.writeText(text)
-}
+
 </script>
 
 <template>
@@ -84,7 +83,7 @@ function copyText(text: string) {
         <label class="block text-sm text-text-light mb-2">日期</label>
         <div class="flex items-center gap-2">
           <input :value="dateStr" readonly class="flex-1 px-3 py-2 rounded-lg border border-border bg-bg text-text text-sm font-mono" />
-          <button class="text-xs text-primary cursor-pointer bg-transparent border-none" @click="copyText(dateStr)">复制</button>
+          <CopyButton :text="dateStr" />
         </div>
       </div>
     </div>
@@ -105,7 +104,7 @@ function copyText(text: string) {
         <label class="block text-sm text-text-light mb-2">时间戳</label>
         <div class="flex items-center gap-2">
           <input :value="timestamp" readonly class="flex-1 px-3 py-2 rounded-lg border border-border bg-bg text-text text-sm font-mono" />
-          <button class="text-xs text-primary cursor-pointer bg-transparent border-none" @click="copyText(timestamp)">复制</button>
+          <CopyButton :text="timestamp" />
         </div>
       </div>
     </div>

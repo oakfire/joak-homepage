@@ -50,6 +50,7 @@ src/
 - 颜色通过 CSS 变量动态切换，UnoCSS 主题引用 `var(--color-xxx)`；默认值见 `uno.config.ts`
 - 工具路由路径：`/tool/<tool-id>`
 - 工具组件使用 `<script setup lang="ts">`
+- 复制按钮统一使用 `CopyButton` 组件（`src/components/CopyButton.vue`），用法：`<CopyButton :text="要复制的字符串" />`，icon 样式 + 悬浮提示 + 复制后打勾 2 秒恢复，无需自行实现复制逻辑和状态
 
 ## Important
 
