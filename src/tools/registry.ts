@@ -62,7 +62,7 @@ export const tools: Tool[] = [
     id: 'file-hash',
     name: '文件哈希',
     icon: 'i-lucide-hash',
-    description: '计算文件的 MD5/SHA 哈希值',
+    description: '计算 CRC/MD5/SHA 哈希值等',
     component: () => import('./file-hash/index.vue'),
   },
   {
@@ -71,5 +71,12 @@ export const tools: Tool[] = [
     icon: 'i-lucide-calculator',
     description: '数字进制转换（2/8/10/16）',
     component: () => import('./base-converter/index.vue'),
+  },
+  {
+    id: 'file-inspector',
+    name: '文件类型检测',
+    icon: 'i-lucide-file-search',
+    description: '检测文件类型与运行平台架构',
+    component: () => import('./file-inspector/index.vue'),
   },
 ]
