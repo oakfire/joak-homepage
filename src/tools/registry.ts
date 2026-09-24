@@ -79,4 +79,11 @@ export const tools: Tool[] = [
     description: '检测文件类型与运行平台架构',
     component: () => import('./file-inspector/index.vue'),
   },
+  {
+    id: 'led-marquee',
+    name: 'LED 跑马灯',
+    icon: 'i-lucide-siren',
+    description: '跑马灯/警示灯/Matrix屏保',
+    component: () => import('./led-marquee/index.vue'),
+  },
 ]
