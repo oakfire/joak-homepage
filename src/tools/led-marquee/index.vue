@@ -5,10 +5,13 @@ const mode = ref<'marquee' | 'warning' | 'screensaver'>('marquee')
 
 const text = ref('注意安全 · LED 跑马灯 Hello!')
 const fontSize = ref(48)
+const maxFont = ref(480)
 const speed = ref(5)
 const textColor = ref('#FF3B30')
 const bgColor = ref('#000000')
 const dirMode = ref<'auto' | 'h' | 'v'>('auto')
+const rotDeg = ref<0 | 90 | -90>(0)
+const vScroll = ref<'up' | 'down'>('up')
 const playing = ref(true)
 const ledDots = ref(true)
 const glow = ref(true)
@@ -23,6 +26,7 @@ const warnEl = ref<HTMLElement | null>(null)
 
 const isNarrow = ref(false)
 const isPortrait = ref(false)
+const boxH = ref(300)
 
 const matrixCanvas = ref<HTMLCanvasElement | null>(null)
 const matrixColor = ref('#00FF41')
@@ -66,6 +70,14 @@ function brighten(hex: string, t: number) {
 function updateViewport() {
   isNarrow.value = window.matchMedia('(max-width: 768px)').matches
   isPortrait.value = window.matchMedia('(orientation: portrait)').matches
+  maxFont.value = Math.max(320, Math.round(window.innerHeight * 1.3))
+  if (fontSize.value > maxFont.value) fontSize.value = maxFont.value
+}
+
+function syncBox() {
+  const el = warnEl.value
+  if (!el) return
+  boxH.value = el.clientHeight || 300
 }
 
 function sizeMatrix() {
@@ -155,9 +167,13 @@ onMounted(() => {
   document.addEventListener('fullscreenchange', onFsChange)
   document.addEventListener('visibilitychange', onVisibility)
   mRO = new ResizeObserver(() => {
+    syncBox()
     if (mode.value === 'screensaver') sizeMatrix()
   })
-  if (warnEl.value) mRO.observe(warnEl.value)
+  if (warnEl.value) {
+    mRO.observe(warnEl.value)
+    syncBox()
+  }
 })
 onUnmounted(() => {
   window.removeEventListener('resize', updateViewport)
@@ -180,11 +196,16 @@ const chars = computed(() => {
 const displayText = computed(() => text.value || ' ')
 
 const previewH = computed(() => {
-  if (mode.value === 'marquee' && actualDir.value === 'h') {
-    return Math.max(72, Math.round(fontSize.value * 2.2))
+  if (mode.value === 'marquee' && actualDir.value === 'h' && rotDeg.value === 0) {
+    return Math.min(Math.max(72, Math.round(fontSize.value * 2.2)), Math.round(maxFont.value * 0.55))
   }
   return 300
 })
+
+function fillScreenFont() {
+  const h = document.fullscreenElement ? window.innerHeight : (boxH.value || window.innerHeight)
+  fontSize.value = Math.min(maxFont.value, Math.round(h * 1.15))
+}
 
 const pxPerSec = computed(() => 20 + (speed.value - 1) * 40)
 
@@ -210,9 +231,17 @@ const hTrackStyle = computed(() => ({
   animationPlayState: playing.value ? 'running' : 'paused',
 }))
 
+const bandH = computed(() => Math.max(48, Math.round(fontSize.value * 2)))
+
+const rotBoxStyle = computed(() => ({
+  width: boxH.value + 'px',
+  height: bandH.value + 'px',
+  transform: `translate(-50%, -50%) rotate(${rotDeg.value}deg)`,
+}))
+
 const vTrackStyle = computed(() => ({
   ...textStyle.value,
-  animation: `led-y ${animDuration.value}s linear infinite`,
+  animation: `led-y-${vScroll.value} ${animDuration.value}s linear infinite`,
   animationPlayState: playing.value ? 'running' : 'paused',
 }))
 
@@ -319,9 +348,19 @@ async function toggleFullscreen() {
       <template v-if="mode === 'marquee'">
         <div v-if="ledDots" class="absolute inset-0 led-grid pointer-events-none" />
 
-        <div v-if="actualDir === 'h'" class="h-full flex items-center overflow-hidden">
+        <div v-if="actualDir === 'h' && rotDeg === 0" class="h-full flex items-center overflow-hidden">
           <div class="marquee-h flex w-max whitespace-nowrap" :style="hTrackStyle">
             <span v-for="i in 2" :key="i" class="pr-16">{{ displayText }}</span>
+          </div>
+        </div>
+
+        <div v-else-if="actualDir === 'h'" class="absolute inset-0 overflow-hidden">
+          <div class="absolute left-1/2 top-1/2 overflow-hidden" :style="rotBoxStyle">
+            <div class="h-full flex items-center">
+              <div class="marquee-h flex w-max whitespace-nowrap" :style="hTrackStyle">
+                <span v-for="i in 2" :key="i" class="pr-16">{{ displayText }}</span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -388,12 +427,41 @@ async function toggleFullscreen() {
           class="px-3 py-1.5 rounded-lg text-sm border-none cursor-pointer transition-colors"
           :class="dirMode === 'h' ? 'bg-primary text-white' : 'bg-bg-card text-text border border-border'"
           @click="dirMode = 'h'"
-        >横向（电脑）</button>
+        >横向</button>
         <button
           class="px-3 py-1.5 rounded-lg text-sm border-none cursor-pointer transition-colors"
           :class="dirMode === 'v' ? 'bg-primary text-white' : 'bg-bg-card text-text border border-border'"
           @click="dirMode = 'v'"
-        >纵向（手机）</button>
+        >纵向</button>
+        <template v-if="actualDir === 'h'">
+          <button
+            class="px-3 py-1.5 rounded-lg text-sm border-none cursor-pointer transition-colors"
+            :class="rotDeg === 0 ? 'bg-primary text-white' : 'bg-bg-card text-text border border-border'"
+            @click="rotDeg = 0"
+          >不旋转</button>
+          <button
+            class="px-3 py-1.5 rounded-lg text-sm border-none cursor-pointer transition-colors"
+            :class="rotDeg === 90 ? 'bg-primary text-white' : 'bg-bg-card text-text border border-border'"
+            @click="rotDeg = 90"
+          >顺时针90°</button>
+          <button
+            class="px-3 py-1.5 rounded-lg text-sm border-none cursor-pointer transition-colors"
+            :class="rotDeg === -90 ? 'bg-primary text-white' : 'bg-bg-card text-text border border-border'"
+            @click="rotDeg = -90"
+          >逆时针90°</button>
+        </template>
+        <template v-else>
+          <button
+            class="px-3 py-1.5 rounded-lg text-sm border-none cursor-pointer transition-colors"
+            :class="vScroll === 'up' ? 'bg-primary text-white' : 'bg-bg-card text-text border border-border'"
+            @click="vScroll = 'up'"
+          >上</button>
+          <button
+            class="px-3 py-1.5 rounded-lg text-sm border-none cursor-pointer transition-colors"
+            :class="vScroll === 'down' ? 'bg-primary text-white' : 'bg-bg-card text-text border border-border'"
+            @click="vScroll = 'down'"
+          >下</button>
+        </template>
         <span class="text-xs text-text-light">当前：{{ actualDir === 'h' ? '横向' : '纵向' }}{{ dirMode === 'auto' ? '（自动）' : '' }}</span>
         <button
           class="ml-auto px-4 py-2 rounded-lg bg-secondary text-text text-sm border-none cursor-pointer hover:bg-secondary-light transition-colors"
@@ -408,7 +476,13 @@ async function toggleFullscreen() {
       <div class="flex gap-4">
         <div class="flex-1">
           <label class="block text-sm text-text-light mb-2">文字大小（{{ fontSize }}px）</label>
-          <input type="range" v-model.number="fontSize" min="16" max="120" class="w-full accent-primary" />
+          <div class="flex items-center gap-2">
+            <input type="range" v-model.number="fontSize" min="16" :max="maxFont" step="2" class="flex-1 accent-primary" />
+            <button
+              class="px-3 py-1.5 rounded-lg text-sm border-none cursor-pointer bg-secondary text-text hover:bg-secondary-light transition-colors"
+              @click="fillScreenFont"
+            >一字撑满</button>
+          </div>
         </div>
         <div class="flex-1">
           <label class="block text-sm text-text-light mb-2">滚动速度（{{ speed }}）</label>
@@ -592,9 +666,13 @@ async function toggleFullscreen() {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
-@keyframes led-y {
+@keyframes led-y-up {
   from { transform: translateY(0); }
   to { transform: translateY(-50%); }
+}
+@keyframes led-y-down {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0); }
 }
 .led-grid {
   background-image: radial-gradient(circle, rgba(0, 0, 0, 0.4) 1px, transparent 1.4px);
