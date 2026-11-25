@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { theme, presets, setThemeColors, resetTheme, randomTheme, type ThemeColors } from '../composables/useTheme'
+import { trailSettings, setTrailSettings, type TrailStyle } from '../composables/useMouseTrail'
 
 const open = ref(false)
+
+const styleOptions: { value: TrailStyle; label: string }[] = [
+  { value: 'dot', label: '圆点' },
+  { value: 'star', label: '星星' },
+]
 
 const colorFields: { key: keyof ThemeColors; label: string }[] = [
   { key: 'primary', label: '主色' },
@@ -21,6 +27,10 @@ function applyPreset(p: typeof presets[number]) {
 function onColor(key: keyof ThemeColors, e: Event) {
   const val = (e.target as HTMLInputElement).value
   setThemeColors({ ...theme, [key]: val })
+}
+
+function onTrailColor(e: Event) {
+  setTrailSettings({ color: (e.target as HTMLInputElement).value })
 }
 </script>
 
@@ -69,6 +79,72 @@ function onColor(key: keyof ThemeColors, e: Event) {
               />
               <span class="text-sm text-[var(--color-text)] flex-1">{{ f.label }}</span>
               <span class="text-xs text-[var(--color-text-light)] font-mono">{{ theme[f.key] }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-[var(--color-border)] pt-4">
+          <div class="flex items-center justify-between mb-3">
+            <label class="block text-sm text-[var(--color-text-light)]">鼠标效果</label>
+            <button
+              role="switch"
+              :aria-checked="trailSettings.enabled"
+              class="w-10 h-6 rounded-full border-none cursor-pointer relative transition-colors"
+              :class="trailSettings.enabled ? 'bg-[var(--color-primary)]' : 'bg-[var(--color-border)]'"
+              title="开启/关闭鼠标效果"
+              @click="setTrailSettings({ enabled: !trailSettings.enabled })"
+            >
+              <span
+                class="absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all"
+                :class="trailSettings.enabled ? 'left-[18px]' : 'left-0.5'"
+              />
+            </button>
+          </div>
+
+          <div class="space-y-3" :class="trailSettings.enabled ? '' : 'opacity-40 pointer-events-none'">
+            <div>
+              <span class="block text-xs text-[var(--color-text-light)] mb-1.5">发光点样式</span>
+              <div class="flex gap-2">
+                <button
+                  v-for="s in styleOptions"
+                  :key="s.value"
+                  class="flex items-center gap-2 px-3 py-1.5 rounded-lg border text-xs cursor-pointer transition-colors"
+                  :class="trailSettings.style === s.value
+                    ? 'border-[var(--color-primary)] bg-[var(--color-bg)] text-[var(--color-text)]'
+                    : 'border-[var(--color-border)] bg-transparent text-[var(--color-text-light)] hover:border-[var(--color-primary)]'"
+                  @click="setTrailSettings({ style: s.value })"
+                >
+                  <svg v-if="s.value === 'dot'" viewBox="0 0 16 16" class="w-4 h-4">
+                    <circle cx="8" cy="8" r="4" fill="currentColor" />
+                  </svg>
+                  <svg v-else viewBox="0 0 16 16" class="w-4 h-4">
+                    <polygon points="8,1 9.8,6 15,6 10.8,9.2 12.4,14.5 8,11.3 3.6,14.5 5.2,9.2 1,6 6.2,6" fill="currentColor" />
+                  </svg>
+                  {{ s.label }}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <span class="block text-xs text-[var(--color-text-light)] mb-1.5">发光点颜色</span>
+              <div class="flex items-center gap-2">
+                <button
+                  class="px-3 py-1.5 rounded-lg border text-xs cursor-pointer transition-colors"
+                  :class="trailSettings.color === 'theme'
+                    ? 'border-[var(--color-primary)] bg-[var(--color-bg)] text-[var(--color-text)]'
+                    : 'border-[var(--color-border)] bg-transparent text-[var(--color-text-light)] hover:border-[var(--color-primary)]'"
+                  @click="setTrailSettings({ color: 'theme' })"
+                >跟随主题</button>
+                <input
+                  type="color"
+                  :value="trailSettings.color === 'theme' ? theme.primary : trailSettings.color"
+                  @input="onTrailColor"
+                  class="w-8 h-8 rounded border-none cursor-pointer flex-shrink-0"
+                />
+                <span class="text-xs text-[var(--color-text-light)] font-mono">
+                  {{ trailSettings.color === 'theme' ? theme.primary : trailSettings.color }}
+                </span>
+              </div>
             </div>
           </div>
         </div>
