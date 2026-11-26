@@ -86,4 +86,11 @@ export const tools: Tool[] = [
     description: '跑马灯/警示灯/Matrix屏保',
     component: () => import('./led-marquee/index.vue'),
   },
+  {
+    id: 'stream-debugger',
+    name: '视频流调试',
+    icon: 'i-lucide-radio-tower',
+    description: '播放 FLV/HLS/DASH 流并显示调试数据',
+    component: () => import('./stream-debugger/index.vue'),
+  },
 ]

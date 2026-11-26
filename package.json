@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "dashjs": "^5.3.0",
+    "hls.js": "^1.7.4",
+    "mpegts.js": "^1.8.2",
     "vue": "^3.5.42",
     "vue-router": "^4.6.4"
   },
