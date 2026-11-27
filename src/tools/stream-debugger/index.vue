@@ -1,11 +1,33 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, nextTick, onMounted, onBeforeUnmount } from 'vue'
-import Hls from 'hls.js'
-import mpegts from 'mpegts.js'
-import * as dashjs from 'dashjs'
 import CopyButton from '../../components/CopyButton.vue'
 import MiniChart from './MiniChart.vue'
 import { fmtBytes, fmtBitrate, fmtSpeed, fmtTime, fmtClock, fmtDateShort, shortUrl, readyStateName, networkStateName } from './format'
+
+// ---------- 播放引擎（按需动态加载，避免打进同一个 chunk） ----------
+let HlsCls: any = null
+let mpegtsMod: any = null
+let dashjsMod: any = null
+const engineLoaded = reactive({ hls: false, flv: false, dash: false })
+const engineVersions = reactive({ hls: '', flv: '', dash: '' })
+
+async function loadEngine(type: StreamType) {
+  if (type === 'hls' && !HlsCls) {
+    const mod: any = await import('hls.js')
+    HlsCls = mod.default ?? mod
+    engineVersions.hls = HlsCls.version ?? ''
+    engineLoaded.hls = true
+  } else if (type === 'flv' && !mpegtsMod) {
+    const mod: any = await import('mpegts.js')
+    mpegtsMod = mod.default ?? mod
+    engineVersions.flv = mpegtsMod.version ?? ''
+    engineLoaded.flv = true
+  } else if (type === 'dash' && !dashjsMod) {
+    dashjsMod = await import('dashjs')
+    engineVersions.dash = (dashjsMod as any).Version?.() ?? ''
+    engineLoaded.dash = true
+  }
+}
 
 type StreamType = 'flv' | 'hls' | 'dash'
 type TypeSel = 'auto' | StreamType
@@ -295,6 +317,7 @@ let speedSource: 'engine' | 'resource' = 'resource'
 const speedEvents: { t: number; bytes: number }[] = []
 let startMark = 0
 let targetHost = ''
+let playToken = 0
 const throttleMap: Record<string, number> = {}
 
 function throttled(key: string, intervalMs: number): boolean {
@@ -413,7 +436,7 @@ function resetStreamData() {
   chartFps.value = []
 }
 
-function play() {
+async function play() {
   const src = url.value.trim()
   if (!src) {
     errorMsg.value = '请输入流地址'
@@ -425,6 +448,7 @@ function play() {
     return
   }
   stop(true)
+  const token = playToken
   errorMsg.value = ''
   showDropdown.value = false
   rememberStream(src, type)
@@ -450,6 +474,8 @@ function play() {
   video.load()
 
   try {
+    await loadEngine(type)
+    if (token !== playToken) return // 引擎加载期间被停止或切换
     if (type === 'hls') initHls(src)
     else if (type === 'flv') initFlv(src)
     else initDash(src)
@@ -479,6 +505,7 @@ function play() {
 }
 
 function stop(keepLogs = false) {
+  playToken++
   stopPolling()
   try {
     if (hlsRef) { hlsRef.destroy(); hlsRef = null }
@@ -504,9 +531,9 @@ function stop(keepLogs = false) {
 // ---------- HLS (hls.js) ----------
 function initHls(src: string) {
   engineName.value = 'hls.js'
-  engineVer.value = Hls.version
-  if (Hls.isSupported()) {
-    const hls = new Hls({
+  engineVer.value = HlsCls.version
+  if (HlsCls.isSupported()) {
+    const hls = new HlsCls({
       enableWorker: true,
       lowLatencyMode: liveMode.value === 'live',
       backBufferLength: 90,
@@ -527,21 +554,21 @@ function initHls(src: string) {
   }
 }
 
-const HLS_ALWAYS_LOG = new Set<string>([
-  Hls.Events.ERROR,
-  Hls.Events.MANIFEST_PARSED,
-  Hls.Events.MANIFEST_LOADED,
-  Hls.Events.LEVEL_LOADED,
-  Hls.Events.LEVEL_SWITCHED,
-  Hls.Events.LEVEL_UPDATED,
-  Hls.Events.AUDIO_TRACK_SWITCHED,
-  Hls.Events.SUBTITLE_TRACK_SWITCH,
-])
-
 function bindHlsEvents(hls: any) {
-  for (const [name, type] of Object.entries(Hls.Events)) {
+  const E = HlsCls.Events
+  const alwaysLog = new Set<string>([
+    E.ERROR,
+    E.MANIFEST_PARSED,
+    E.MANIFEST_LOADED,
+    E.LEVEL_LOADED,
+    E.LEVEL_SWITCHED,
+    E.LEVEL_UPDATED,
+    E.AUDIO_TRACK_SWITCHED,
+    E.SUBTITLE_TRACK_SWITCH,
+  ])
+  for (const [name, type] of Object.entries(E) as [string, string][]) {
     hls.on(type, (_event: string, data: any) => {
-      if (type === Hls.Events.FRAG_LOADED) {
+      if (type === E.FRAG_LOADED) {
         const f = data?.frag ?? {}
         const stats = f.stats ?? {}
         const bytes = stats.loaded ?? stats.total ?? f.byteLength ?? 0
@@ -550,7 +577,7 @@ function bindHlsEvents(hls: any) {
         recordSegment('hls.js', `L${f.level ?? '?'} SN${f.sn ?? '?'}${f.type ? ` (${f.type})` : ''}`, bytes, loadMs, f.duration)
         if (throttled('hls-frag-log', 2000)) return
       }
-      if (type === Hls.Events.ERROR) {
+      if (type === E.ERROR) {
         const fatal = data?.fatal ? ' [fatal]' : ''
         const code = data?.response?.code ? ` HTTP ${data.response.code}` : ''
         const err = data?.error?.message ?? data?.error ?? ''
@@ -561,10 +588,10 @@ function bindHlsEvents(hls: any) {
           errorMsg.value = `hls.js 致命错误: ${data.type}/${data.details}`
           // 常见恢复手段
           try {
-            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            if (data.type === HlsCls.ErrorTypes.NETWORK_ERROR) {
               log('warn', 'hls.js', '尝试恢复网络错误: startLoad()')
               hls.startLoad()
-            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+            } else if (data.type === HlsCls.ErrorTypes.MEDIA_ERROR) {
               log('warn', 'hls.js', '尝试恢复媒体错误: recoverMediaError()')
               hls.recoverMediaError()
             }
@@ -574,7 +601,7 @@ function bindHlsEvents(hls: any) {
         }
         return
       }
-      if (!HLS_ALWAYS_LOG.has(type) && throttled(`hls-${type}`, 2000)) return
+      if (!alwaysLog.has(type) && throttled(`hls-${type}`, 2000)) return
       log('info', 'hls.js', `${name}: ${summarize(data)}`)
     })
   }
@@ -619,8 +646,8 @@ function setLevel(i: number) {
 // ---------- FLV (mpegts.js) ----------
 function initFlv(src: string) {
   engineName.value = 'mpegts.js'
-  engineVer.value = (mpegts as any).version ?? ''
-  if (!mpegts.isSupported()) {
+  engineVer.value = mpegtsMod.version ?? ''
+  if (!mpegtsMod.isSupported()) {
     throw new Error('当前浏览器不支持 mpegts.js (MSE 不可用)')
   }
   const dataSource: any = {
@@ -631,7 +658,7 @@ function initFlv(src: string) {
   if (liveMode.value === 'live') dataSource.isLive = true
   if (liveMode.value === 'vod') dataSource.isLive = false
 
-  const player = mpegts.createPlayer(dataSource, {
+  const player = mpegtsMod.createPlayer(dataSource, {
     enableWorker: true,
     lazyLoad: false,
     autoCleanupMinBackwardDuration: 60,
@@ -643,14 +670,14 @@ function initFlv(src: string) {
   bindFlvEvents(player)
   player.load()
 
-  const featureList = (mpegts as any).getFeatureList?.()
+  const featureList = mpegtsMod.getFeatureList?.()
   if (featureList) {
     log('info', 'mpegts.js', `特性: ${summarize(featureList)}`)
   }
 }
 
 function bindFlvEvents(player: any) {
-  const E = mpegts.Events
+  const E = mpegtsMod.Events
   const on = (name: string, key: string, cb?: (data: any) => void) => {
     player.on(key, (data: any) => {
       cb?.(data)
@@ -698,7 +725,7 @@ function bindFlvEvents(player: any) {
 
 // ---------- DASH (dash.js) ----------
 function initDash(src: string) {
-  const D = dashjs as any
+  const D = dashjsMod
   engineName.value = 'dash.js'
   const player = D.MediaPlayer().create()
   dashRef = player
@@ -782,7 +809,7 @@ const DASH_SKIP_LOG = new Set([
 ])
 
 function bindDashEvents(player: any) {
-  const events = (dashjs as any).MediaPlayer.events as Record<string, string>
+  const events = dashjsMod.MediaPlayer.events as Record<string, string>
   for (const [name, type] of Object.entries(events)) {
     player.on(type, (e: any) => {
       if (type === 'error') {
@@ -1124,21 +1151,40 @@ function msSupport(mime: string): string {
   }
 }
 
-const envRows = computed(() => [
-  { label: 'UserAgent', value: navigator.userAgent },
-  { label: 'MSE (MediaSource)', value: typeof (window as any).MediaSource !== 'undefined' ? '✓ 支持' : '✗ 不支持' },
-  { label: 'hls.js (MSE)', value: Hls.isSupported() ? `✓ ${Hls.version}` : '✗ 不支持' },
-  { label: 'mpegts.js (MSE)', value: mpegts.isSupported() ? `✓ ${(mpegts as any).version ?? ''}` : '✗ 不支持' },
-  { label: 'dash.js', value: `✓ ${engineVer.value || '5.x'}` },
-  { label: 'H.264 (avc1.64001f)', value: msSupport('video/mp4; codecs="avc1.64001f"') },
-  { label: 'H.265 (hvc1.1.6.L120.90)', value: msSupport('video/mp4; codecs="hvc1.1.6.L120.90"') },
-  { label: 'AV1 (av01.0.08M.08)', value: msSupport('video/mp4; codecs="av01.0.08M.08"') },
-  { label: 'AAC (mp4a.40.2)', value: msSupport('video/mp4; codecs="mp4a.40.2"') },
-  { label: 'VP9 (vp09.00.10.08)', value: msSupport('video/mp4; codecs="vp09.00.10.08"') },
-  { label: 'requestVideoFrameCallback', value: typeof (window as any).requestVideoFrameCallback !== 'undefined' || (HTMLVideoElement.prototype as any).requestVideoFrameCallback ? '✓ 支持' : '✗ 不支持' },
-  { label: 'getVideoPlaybackQuality', value: typeof (videoRef.value as any)?.getVideoPlaybackQuality === 'function' || 'getVideoPlaybackQuality' in HTMLVideoElement.prototype ? '✓ 支持' : '✗ 不支持' },
-  { label: 'mpegts.js 特性', value: (() => { const f = (mpegts as any).getFeatureList?.(); return f ? Object.entries(f).map(([k, v]) => `${k}=${v}`).join(', ') : '-' })() },
-])
+const envRows = computed(() => {
+  const rows = [
+    { label: 'UserAgent', value: navigator.userAgent },
+    { label: 'MSE (MediaSource)', value: typeof (window as any).MediaSource !== 'undefined' ? '✓ 支持' : '✗ 不支持' },
+    {
+      label: 'hls.js',
+      value: engineLoaded.hls
+        ? `✓ 已加载 ${engineVersions.hls}（MSE ${HlsCls?.isSupported?.() ? '✓' : '✗'}）`
+        : '未加载（播放 HLS 时按需加载）',
+    },
+    {
+      label: 'mpegts.js',
+      value: engineLoaded.flv
+        ? `✓ 已加载 ${engineVersions.flv}（MSE ${mpegtsMod?.isSupported?.() ? '✓' : '✗'}）`
+        : '未加载（播放 FLV 时按需加载）',
+    },
+    {
+      label: 'dash.js',
+      value: engineLoaded.dash ? `✓ 已加载 ${engineVersions.dash}` : '未加载（播放 DASH 时按需加载）',
+    },
+    { label: 'H.264 (avc1.64001f)', value: msSupport('video/mp4; codecs="avc1.64001f"') },
+    { label: 'H.265 (hvc1.1.6.L120.90)', value: msSupport('video/mp4; codecs="hvc1.1.6.L120.90"') },
+    { label: 'AV1 (av01.0.08M.08)', value: msSupport('video/mp4; codecs="av01.0.08M.08"') },
+    { label: 'AAC (mp4a.40.2)', value: msSupport('video/mp4; codecs="mp4a.40.2"') },
+    { label: 'VP9 (vp09.00.10.08)', value: msSupport('video/mp4; codecs="vp09.00.10.08"') },
+    { label: 'requestVideoFrameCallback', value: typeof (window as any).requestVideoFrameCallback !== 'undefined' || (HTMLVideoElement.prototype as any).requestVideoFrameCallback ? '✓ 支持' : '✗ 不支持' },
+    { label: 'getVideoPlaybackQuality', value: typeof (videoRef.value as any)?.getVideoPlaybackQuality === 'function' || 'getVideoPlaybackQuality' in HTMLVideoElement.prototype ? '✓ 支持' : '✗ 不支持' },
+  ]
+  if (engineLoaded.flv) {
+    const f = mpegtsMod?.getFeatureList?.()
+    if (f) rows.push({ label: 'mpegts.js 特性', value: Object.entries(f).map(([k, v]) => `${k}=${v}`).join(', ') })
+  }
+  return rows
+})
 
 // ---------- Tabs ----------
 const tab = ref<'env' | 'media' | 'quality' | 'segments' | 'network' | 'logs'>('media')
